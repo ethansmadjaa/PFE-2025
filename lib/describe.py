@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import tempfile
 from typing import List
 
@@ -25,6 +26,10 @@ class ImageAnalyzer:
         """
         self.vision_model = vision_model
         self.text_model = text_model
+
+        # Configure Ollama client with host from environment
+        ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+        self.client = ollama.Client(host=ollama_host)
 
     def analyze_image_from_base64(self, image_base64: str) -> str:
         """
@@ -64,7 +69,7 @@ class ImageAnalyzer:
         """
         print(f"Analyzing image with {self.vision_model}...")
 
-        response = ollama.chat(
+        response = self.client.chat(
             model=self.vision_model,
             messages=[
                 {
@@ -106,7 +111,7 @@ Each prompt should be distinct and describe a concrete sound, instrument, or tex
 Return ONLY a valid JSON array of {num_descriptions} strings, no additional text.
 Example format: ["deep bass drum with reverb", "metallic scraping sound", ...]"""
 
-        response = ollama.chat(
+        response = self.client.chat(
             model=self.text_model,
             messages=[
                 {

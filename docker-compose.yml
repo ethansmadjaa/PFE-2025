@@ -1,0 +1,100 @@
+services:
+  # Ollama service with vision and text models
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pfe-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    # Uncomment for GPU support (requires nvidia-docker)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Model initialization service - pulls Ollama models on first run
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: pfe-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: >
+      sh -c "
+        echo 'Waiting for Ollama service to be ready...';
+        sleep 5;
+        echo 'Pulling llama3.2-vision model...';
+        ollama pull llama3.2-vision;
+        echo 'Pulling llama3.2 text model...';
+        ollama pull llama3.2;
+        echo 'All Ollama models pulled successfully!';
+      "
+    restart: "no"
+
+  # FastAPI application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pfe-fastapi
+    ports:
+      - "8000:8000"
+    volumes:
+      - huggingface_models:/app/models/huggingface
+      - torch_models:/app/models/torch
+      - ./:/app
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - HF_HOME=/app/models/huggingface
+      - TRANSFORMERS_CACHE=/app/models/huggingface
+      - TORCH_HOME=/app/models/torch
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
+    # Uncomment for GPU support (requires nvidia-docker)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  # Persistent storage for models
+  ollama_models:
+    name: pfe-ollama-models
+  huggingface_models:
+    name: pfe-huggingface-models
+  torch_models:
+    name: pfe-torch-models
+
+networks:
+  default:
+    name: pfe-network
