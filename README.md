@@ -2,20 +2,34 @@
 
 ## Description
 
-Projet de fin d'études 2025 - [Description brève du projet à ajouter]
+Projet de fin d'études 2025 - Application de génération audio à partir d'images utilisant FastAPI et des modèles Ollama.
 
 ## Prérequis
 
 - Python 3.x
 - UV (gestionnaire de paquets Python moderne)
+- Docker et Docker Compose (optionnel)
+- Ollama (pour les modèles d'IA)
 
 ## Installation
 
- ollama run llama3.2
+## Lancement
 
- ollama run llama3.2-vision
+### Option 1 : Exécution locale
 
- 
+#### Démarrer l'application principale
+
+## Installation des modèles Ollama
+
+Avant de démarrer l'application, installez les modèles Ollama nécessaires :
+
+```bash
+ollama run llama3.2
+ollama run llama3.2-vision
+```
+
+### Installation des dépendances Python
+
 1. **Installer UV**
 
    ```bash
@@ -28,21 +42,31 @@ Projet de fin d'études 2025 - [Description brève du projet à ajouter]
    uv sync
    ```
 
-## Lancement
-
-### Démarrer l'application principale
-
 ```bash
 uv run main.py
 ```
 
-### Exécuter les tests
+#### Exécuter les tests
 
 Dans un terminal séparé, lancez :
 
 ```bash
 uv run test.py
 ```
+
+### Option 2 : Exécution avec Docker
+
+1. **Premier lancement** (avec construction de l'image)
+
+   ```bash
+   docker-compose up --build
+   ```
+
+2. **Lancements suivants**
+
+   ```bash
+   docker-compose up
+   ```
 
 ## Structure du Projet
 

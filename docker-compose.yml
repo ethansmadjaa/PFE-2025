@@ -59,7 +59,10 @@ services:
     volumes:
       - huggingface_models:/app/models/huggingface
       - torch_models:/app/models/torch
-      - ./:/app
+      # Mount only the application code, not the entire directory
+      # This preserves the .venv directory created during build
+      - ./main.py:/app/main.py:ro
+      - ./services:/app/services:ro
     environment:
       - OLLAMA_HOST=http://ollama:11434
       - HF_HOME=/app/models/huggingface
