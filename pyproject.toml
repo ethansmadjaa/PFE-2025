@@ -1,0 +1,20 @@
+[project]
+name = "pfe-2025"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "einops>=0.8.1",
+    "soundfile>=0.13.1",
+    # "tango",  # Removed due to dependency conflict with old beautifulsoup==3.2.0
+    "torch==2.4.0",
+    "torchaudio==2.4.0",
+    "transformers==4.44.0",
+    "stable-audio-tools<0.1.0",
+    "ollama>=0.6.1",
+    "tangoflux",
+    "fastapi>=0.115.6",
+    "uvicorn>=0.34.0",
+    "logger>=1.4",
+]
