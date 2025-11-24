@@ -11,6 +11,11 @@ Projet de fin d'études 2025 - [Description brève du projet à ajouter]
 
 ## Installation
 
+ ollama run llama3.2
+
+ ollama run llama3.2-vision
+
+ 
 1. **Installer UV**
 
    ```bash
@@ -47,11 +52,3 @@ PFE-2025/
 ├── test.py          # Script de tests
 └── README.md        # Ce fichier
 ```
-
-## Contribution
-
-[Instructions de contribution à ajouter]
-
-## Licence
-
-[Licence à préciser]
