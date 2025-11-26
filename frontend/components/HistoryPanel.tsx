@@ -69,7 +69,7 @@ export function HistoryPanel({
   const handleDeleteEntry = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      await historyCache.deleteEntry(id);
+      await historyCache.deleteEntryWithSync(id);
       setEntries((prev) => prev.filter((entry) => entry.id !== id));
       if (expandedEntry?.id === id) {
         // Cleanup URLs before closing
@@ -85,7 +85,7 @@ export function HistoryPanel({
   const handleClearAll = async () => {
     if (confirm("Are you sure you want to clear all history?")) {
       try {
-        await historyCache.clearAll();
+        await historyCache.clearAllWithSync();
         setEntries([]);
         if (expandedEntry) {
           URL.revokeObjectURL(expandedEntry.imageUrl);
@@ -268,7 +268,7 @@ export function HistoryPanel({
                     alt="Artwork thumbnail"
                     className="w-full aspect-square object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="absolute bottom-0 left-0 right-0 p-2 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                     {formatDate(entry.timestamp)}
                   </div>

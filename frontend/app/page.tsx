@@ -27,11 +27,20 @@ export default function Home() {
   const [historyCount, setHistoryCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load history count on mount
+  // Load history from server on mount, then get count
   useEffect(() => {
-    historyCache.getAllEntries().then((entries) => {
+    const loadHistory = async () => {
+      try {
+        // Load from server first (syncs with local IndexedDB)
+        await historyCache.loadFromServer();
+      } catch (err) {
+        console.error("Failed to load history from server:", err);
+      }
+      // Get count from local cache
+      const entries = await historyCache.getAllEntries();
       setHistoryCount(entries.length);
-    });
+    };
+    loadHistory();
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -105,10 +114,10 @@ export default function Home() {
             setIsLoading(false);
             setLoadingMessage("");
 
-            // Save to history cache
+            // Save to history cache (with server sync)
             if (currentImageRef.current) {
               try {
-                await historyCache.saveEntry(
+                await historyCache.saveEntryWithSync(
                   currentImageRef.current,
                   audioSamples
                 );
