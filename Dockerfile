@@ -21,6 +21,15 @@ RUN uv sync --frozen
 # Copy application code
 COPY . .
 
+# Set environment variables for model caching during build
+ENV HF_HOME=/app/models/huggingface \
+    TRANSFORMERS_CACHE=/app/models/huggingface \
+    TORCH_HOME=/app/models/torch
+
+# Create cache directories and pre-download TangoFlux model
+RUN mkdir -p /app/models/huggingface /app/models/torch && \
+    /app/.venv/bin/python download_models.py
+
 # Final stage
 FROM python:3.11-slim-bookworm
 
@@ -35,7 +44,10 @@ RUN apt-get update && apt-get install -y \
 
 # Copy UV and virtual environment from builder
 COPY --from=builder /app/.venv /app/.venv
+# Copy application code from builder
 COPY --from=builder /app /app
+# Copy cached models from builder
+COPY --from=builder /app/models /app/models
 
 # Set environment variables
 ENV PATH="/app/.venv/bin:$PATH" \
@@ -44,8 +56,8 @@ ENV PATH="/app/.venv/bin:$PATH" \
     TRANSFORMERS_CACHE=/app/models/huggingface \
     TORCH_HOME=/app/models/torch
 
-# Create directories for model caching
-RUN mkdir -p /app/models/huggingface /app/models/torch /tmp/audio
+# Create directories for audio output (models are already copied from builder)
+RUN mkdir -p /tmp/audio
 
 # Expose port
 EXPOSE 8000

@@ -13,9 +13,7 @@ class ImageAnalyzer:
     """Handles image analysis and audio description generation using Ollama vision models."""
 
     def __init__(
-        self,
-        vision_model: str = "llama3.2-vision",
-        text_model: str = "llama3.2"
+        self, vision_model: str = "llama3.2-vision", text_model: str = "llama3.2"
     ):
         """
         Initialize the image analyzer.
@@ -54,6 +52,7 @@ class ImageAnalyzer:
         finally:
             # Cleanup
             import os
+
             if os.path.exists(temp_image_path):
                 os.unlink(temp_image_path)
 
@@ -72,12 +71,8 @@ class ImageAnalyzer:
         response = self.client.chat(
             model=self.vision_model,
             messages=[
-                {
-                    "role": "user",
-                    "content": DESCRIBE_PROMPT,
-                    "images": [image_path]
-                }
-            ]
+                {"role": "user", "content": DESCRIBE_PROMPT, "images": [image_path]}
+            ],
         )
 
         vision_output = response.message.content
@@ -86,9 +81,7 @@ class ImageAnalyzer:
         return vision_output
 
     def generate_audio_descriptions(
-        self,
-        vision_analysis: str,
-        num_descriptions: int = 10
+        self, vision_analysis: str, num_descriptions: int = 10
     ) -> List[str]:
         """
         Generate audio descriptions from vision analysis.
@@ -102,44 +95,96 @@ class ImageAnalyzer:
         """
         print(f"Generating {num_descriptions} audio descriptions...")
 
-        prompt = f"""Based on this audio analysis:
+        prompt = f"""Based on this image analysis:
 
-{vision_analysis}
+        {vision_analysis}
 
-Generate exactly {num_descriptions} different, specific audio prompts for a sound generator.
-Each prompt should be distinct and describe a concrete sound, instrument, or texture.
-Return ONLY a valid JSON array of {num_descriptions} strings, no additional text.
-Example format: ["deep bass drum with reverb", "metallic scraping sound", ...]"""
+        Generate exactly {num_descriptions} highly distinct sound design samples. All samples MUST be coherent with the visual mood, colors, atmosphere, and emotional tone of the image.
+
+        FORMAT TO FOLLOW STRICTLY:
+
+        - 14 Loops
+        • Drones × 2
+            - (4 bars) sustained harmonic clusters
+            - (4 bars) single-note drones centered on one root note
+        • Piano melody × 1
+            - (4 bars) melodic piano phrase with emotional progression
+        • Textures × 5
+            - (2 bars) granular textures (transformed field recordings)
+            - (2 bars) organic noises (wind, friction, water, resonant metal)
+            - (2 bars) spatial ambiance (pink noise, synthetic wind, HF halos)
+            - (1 bar) microtextures moving across the spectrum (shimmers, crackles, sparkles)
+        • Low-end / rumbles × 2
+            - (2 bars) deep atmospheric sub-bass layers
+        • Pads × 3
+            - (2 bars) textured pads (granular, analog, modular)
+
+        - 3 Rhythmic Loops
+        • (1 bar) soft percussive clicks / tacs / glitch ticks
+        • (1 bar) low-frequency pulses (felt kick, sub pulses)
+        • (1 bar) slow modular shakers / grain sequences
+
+        - 4 One-shots
+        • (1/2 bar) soft impacts (wood, light metal, reverberant hits) ×2
+        • (1/2 bar) abstract percussive strike
+        • (1/2 bar) atmospheric pluck without sharp transient
+
+        RULES:
+        1. Use the categories above as structural templates but adapt to the image mood.
+        2. The prompts you generate must be very imaged and not technical - include colors, mood, ambiance, etc.
+        3. Be specific, realistic, and musically usable.
+        4. All {num_descriptions} samples must belong to different sub-types of the list above.
+        5. Output MUST be a Python list of {num_descriptions} items, each item a single-sentence description.
+        6. All notes must be in the same scale of notes (ex: C-minor, G-major, etc.)
+
+        Example of final format (structure only):
+        [
+            "Sample 1 description...",
+            "Sample 2 description...",
+            ...
+            "Sample {num_descriptions} description..."
+        ]"""
 
         response = self.client.chat(
             model=self.text_model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+            messages=[{"role": "user", "content": prompt}],
+            format={
+                "type": "object",
+                "properties": {
+                    "descriptions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": num_descriptions,
+                        "maxItems": num_descriptions,
+                    }
+                },
+                "required": ["descriptions"],
+            },
         )
 
         descriptions_text = response.message.content.strip()
         print(f"Descriptions response: {descriptions_text}")
 
-        # Extract JSON array from the response
-        # Handle cases where the model might wrap it in markdown code blocks
-        if "```json" in descriptions_text:
-            descriptions_text = descriptions_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in descriptions_text:
-            descriptions_text = descriptions_text.split("```")[1].split("```")[0].strip()
-
         # Parse JSON
         try:
-            audio_descriptions = json.loads(descriptions_text)
+            response_data = json.loads(descriptions_text)
 
-            # Validate and adjust list length
+            # Extract the descriptions array from the structured response
+            if isinstance(response_data, dict) and "descriptions" in response_data:
+                audio_descriptions = response_data["descriptions"]
+            elif isinstance(response_data, list):
+                # Fallback: handle if model returns raw array despite schema
+                audio_descriptions = response_data
+            else:
+                raise ValueError(
+                    "Response does not contain 'descriptions' key or is not a valid structure"
+                )
+
+            # Validate it's a list
             if not isinstance(audio_descriptions, list):
-                raise ValueError("Response is not a JSON array")
+                raise ValueError("Descriptions is not an array")
 
-            # Trim or pad to exact number
+            # Trim or pad to exact number (as safety net)
             if len(audio_descriptions) > num_descriptions:
                 audio_descriptions = audio_descriptions[:num_descriptions]
             elif len(audio_descriptions) < num_descriptions:
@@ -154,9 +199,7 @@ Example format: ["deep bass drum with reverb", "metallic scraping sound", ...]""
             raise ValueError(f"Failed to parse audio descriptions: {str(e)}")
 
     def image_to_audio_descriptions(
-        self,
-        image_base64: str,
-        num_descriptions: int = 10
+        self, image_base64: str, num_descriptions: int = 10
     ) -> List[str]:
         """
         Complete pipeline: analyze image and generate audio descriptions.
@@ -173,8 +216,7 @@ Example format: ["deep bass drum with reverb", "metallic scraping sound", ...]""
 
         # Generate audio descriptions
         audio_descriptions = self.generate_audio_descriptions(
-            vision_analysis,
-            num_descriptions
+            vision_analysis, num_descriptions
         )
 
         return audio_descriptions

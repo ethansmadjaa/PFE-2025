@@ -57,12 +57,15 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - huggingface_models:/app/models/huggingface
-      - torch_models:/app/models/torch
       # Mount only the application code, not the entire directory
-      # This preserves the .venv directory created during build
+      # This preserves the .venv directory and cached models created during build
       - ./main.py:/app/main.py:ro
+      - ./lib:/app/lib:ro
       - ./services:/app/services:ro
+      # Optional: Use named volumes for additional persistent cache
+      # Uncomment the lines below if you want to persist models across image rebuilds
+      # - huggingface_models:/app/models/huggingface
+      # - torch_models:/app/models/torch
     environment:
       - OLLAMA_HOST=http://ollama:11434
       - HF_HOME=/app/models/huggingface

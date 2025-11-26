@@ -1,0 +1,44 @@
+{
+  "samples": [
+    {
+      "filename": "sample_01.wav",
+      "description": "low, ominous hum with a slight vibrato, evoking the feeling of an industrial conveyor belt"
+    },
+    {
+      "filename": "sample_02.wav",
+      "description": "crisp, sharp snare drum with a short attack and long sustain"
+    },
+    {
+      "filename": "sample_03.wav",
+      "description": "rich, full-bodied cello sound with a warm, dark timbre and slow attack"
+    },
+    {
+      "filename": "sample_04.wav",
+      "description": "whispery, gentle flute melody with high pitch and soft, airy texture"
+    },
+    {
+      "filename": "sample_05.wav",
+      "description": "deep, rumbling bass guitar note with sub-bass undertones and slow decay"
+    },
+    {
+      "filename": "sample_06.wav",
+      "description": "echoey, reverberant saxophone solo with bright, piercing tone and long sustain"
+    },
+    {
+      "filename": "sample_07.wav",
+      "description": "lightning-fast hi-hat pattern with rapid-fire clicks and a sharp, crisp sound"
+    },
+    {
+      "filename": "sample_08.wav",
+      "description": "soothing, ambient synthesizer pad with warm, fuzzy texture and slow attack"
+    },
+    {
+      "filename": "sample_09.wav",
+      "description": "loud, crashing cymbal with a sharp, metallic sound and short decay"
+    },
+    {
+      "filename": "sample_10.wav",
+      "description": "warm, rich organ tone with deep, resonant timbre and long sustain"
+    }
+  ]
+}

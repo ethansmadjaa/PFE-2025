@@ -50,7 +50,7 @@ class AudioGenerator:
         self,
         descriptions: List[str],
         output_dir: str = None,
-        steps: int = 50,
+        steps: int = 30,
         duration: int = 10,
         sample_rate: int = 44100
     ) -> List[Tuple[str, str]]:
