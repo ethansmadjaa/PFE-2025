@@ -13,7 +13,7 @@ class ImageAnalyzer:
     """Handles image analysis and audio description generation using Ollama vision models."""
 
     def __init__(
-        self, vision_model: str = "llama3.2-vision", text_model: str = "llama3.2"
+        self, vision_model: str = "qwen3-vl:235b-cloud", text_model: str = "llama3.2"
     ):
         """
         Initialize the image analyzer.

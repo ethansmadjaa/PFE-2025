@@ -4,6 +4,7 @@ import tempfile
 import zipfile
 import uuid
 import asyncio
+import shutil
 from contextlib import asynccontextmanager
 from datetime import datetime
 from enum import Enum
@@ -13,6 +14,7 @@ import threading
 import fastapi
 import uvicorn
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -20,6 +22,11 @@ from lib.audio import AudioGenerator
 from lib.describe import ImageAnalyzer
 import logging
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 # Initialize services
 audio_generator = AudioGenerator()
@@ -46,6 +53,7 @@ class Job:
         self.created_at = datetime.now()
         self.completed_at: Optional[datetime] = None
         self.zip_path: Optional[str] = None
+        self.temp_dir: Optional[str] = None  # Track temp directory for cleanup
         self.error: Optional[str] = None
         self.samples_generated = 0
         self.total_samples = 10
@@ -61,14 +69,31 @@ async def lifespan(app: FastAPI):
     Load models on startup and cleanup on shutdown.
     """
     # Startup: Load models
-    print("Starting up: Loading models...")
+    print("\n" + "="*80)
+    print("🎵 Art to Audio Sample Pack Generator - Starting Up")
+    print("="*80)
+    print("Loading models...")
     audio_generator.load_model()
+    print("\n✅ All models loaded successfully!")
+    print("🚀 Server is ready to generate audio samples!")
+    print("="*80 + "\n")
     yield
     # Shutdown: Cleanup resources if needed
-    print("Shutting down: Cleaning up resources...")
+    print("\n" + "="*80)
+    print("👋 Shutting down: Cleaning up resources...")
+    print("="*80 + "\n")
 
 
 app = fastapi.FastAPI(lifespan=lifespan)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class ImageRequest(BaseModel):
@@ -101,27 +126,42 @@ def process_sample_pack(job_id: str):
         return
 
     try:
+        print("\n" + "="*80)
+        print(f"🚀 STARTING JOB: {job_id}")
+        print("="*80 + "\n")
         logging.info(f"[Job {job_id}] Starting sample pack generation")
 
         # Step 1: Analyze image
+        print("\n" + "-"*80)
+        print("📸 CHECKPOINT 1/4: Analyzing Image with AI")
+        print("-"*80)
         job.status = JobStatus.ANALYZING
         job.current_step = "Analyzing artwork with AI..."
         job.progress = 5
-        logging.info(f"[Job {job_id}] Analyzing image")
+        logging.info(f"[Job {job_id}] Step 1: Analyzing image with llama3.2-vision")
 
         audio_descriptions = image_analyzer.image_to_audio_descriptions(
             job.image_base64,
             num_descriptions=10
         )
-        logging.info(f"[Job {job_id}] Generated {len(audio_descriptions)} audio descriptions")
+        
+        print(f"✅ Analysis complete! Generated {len(audio_descriptions)} audio descriptions")
+        logging.info(f"[Job {job_id}] ✅ Generated {len(audio_descriptions)} audio descriptions")
+        for i, desc in enumerate(audio_descriptions, 1):
+            print(f"   {i}. {desc[:60]}...")
 
         job.progress = 15
         job.current_step = "Generating audio samples..."
 
         # Step 2: Generate audio samples
+        print("\n" + "-"*80)
+        print("🎵 CHECKPOINT 2/4: Generating Audio Samples")
+        print("-"*80)
         job.status = JobStatus.GENERATING
         temp_audio_dir = tempfile.mkdtemp()
-        logging.debug(f"[Job {job_id}] Created temporary directory: {temp_audio_dir}")
+        job.temp_dir = temp_audio_dir  # Store for cleanup
+        logging.info(f"[Job {job_id}] Step 2: Generating {len(audio_descriptions)} audio samples")
+        print(f"📁 Temporary directory: {temp_audio_dir}\n")
 
         # Generate samples one by one to update progress
         audio_files = []
@@ -131,7 +171,8 @@ def process_sample_pack(job_id: str):
             # Progress from 15% to 90% during generation
             job.progress = 15 + int((idx - 1) / len(audio_descriptions) * 75)
 
-            logging.info(f"[Job {job_id}] Generating sample {idx}: {description[:50]}...")
+            print(f"   🎼 Generating sample {idx}/{len(audio_descriptions)}: {description[:50]}...")
+            logging.info(f"[Job {job_id}] Generating sample {idx}/{len(audio_descriptions)}")
 
             audio_tensor = audio_generator.generate_audio(
                 description=description,
@@ -142,18 +183,24 @@ def process_sample_pack(job_id: str):
             audio_generator.save_audio(audio_tensor, audio_path)
             audio_files.append((audio_path, description))
             job.samples_generated = idx
+            print(f"   ✅ Sample {idx}/{len(audio_descriptions)} complete!")
 
-        logging.info(f"[Job {job_id}] Generated {len(audio_files)} audio files")
+        print(f"\n✅ All {len(audio_files)} audio files generated successfully!")
+        logging.info(f"[Job {job_id}] ✅ Generated {len(audio_files)} audio files")
 
         # Step 3: Create ZIP file
+        print("\n" + "-"*80)
+        print("📦 CHECKPOINT 3/4: Creating ZIP Package")
+        print("-"*80)
         job.current_step = "Packaging samples..."
         job.progress = 92
-        logging.info(f"[Job {job_id}] Creating ZIP file")
+        logging.info(f"[Job {job_id}] Step 3: Creating ZIP file")
 
         zip_path = os.path.join(temp_audio_dir, "sample_pack.zip")
         with zipfile.ZipFile(zip_path, 'w') as zipf:
             for audio_path, description in audio_files:
                 zipf.write(audio_path, os.path.basename(audio_path))
+                print(f"   📄 Added: {os.path.basename(audio_path)}")
 
             metadata = {
                 "samples": [
@@ -168,14 +215,25 @@ def process_sample_pack(job_id: str):
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
             zipf.write(metadata_path, "metadata.json")
+            print(f"   📄 Added: metadata.json")
+
+        print(f"✅ ZIP package created: {zip_path}")
 
         # Mark as completed
+        print("\n" + "-"*80)
+        print("🎉 CHECKPOINT 4/4: Job Complete!")
+        print("-"*80)
         job.status = JobStatus.COMPLETED
         job.progress = 100
         job.current_step = "Complete!"
         job.zip_path = zip_path
         job.completed_at = datetime.now()
-        logging.info(f"[Job {job_id}] Sample pack generated successfully!")
+        
+        duration = (job.completed_at - job.created_at).total_seconds()
+        print(f"✅ Sample pack generated successfully in {duration:.1f} seconds!")
+        print(f"📦 Ready for download: {zip_path}")
+        print("="*80 + "\n")
+        logging.info(f"[Job {job_id}] ✅ Sample pack generated successfully in {duration:.1f}s")
 
     except Exception as e:
         logging.error(f"[Job {job_id}] Error: {str(e)}", exc_info=True)
@@ -238,9 +296,10 @@ async def get_job_status(job_id: str):
 
 
 @app.get("/sample/{job_id}/download")
-async def download_sample_pack(job_id: str):
+async def download_sample_pack(job_id: str, background_tasks: BackgroundTasks):
     """
     Download the completed sample pack ZIP file.
+    Automatically cleans up temporary files after download.
     """
     job = jobs.get(job_id)
     if not job:
@@ -254,6 +313,17 @@ async def download_sample_pack(job_id: str):
 
     if not job.zip_path or not os.path.exists(job.zip_path):
         raise HTTPException(status_code=404, detail="Sample pack file not found")
+
+    # Schedule cleanup after file is sent
+    def cleanup_job_files():
+        try:
+            if job.temp_dir and os.path.exists(job.temp_dir):
+                shutil.rmtree(job.temp_dir)
+                logging.info(f"[Job {job_id}] Cleaned up temporary directory: {job.temp_dir}")
+        except Exception as e:
+            logging.error(f"[Job {job_id}] Failed to cleanup: {str(e)}")
+
+    background_tasks.add_task(cleanup_job_files)
 
     return FileResponse(
         job.zip_path,

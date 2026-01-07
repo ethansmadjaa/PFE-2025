@@ -205,3 +205,12 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 .DS_Store
+
+# Project-specific temporary files
+sample_pack/
+sample_pack.zip
+*.wav
+output.wav
+
+# Frontend data files (can be large with base64 images)
+frontend/data/history.json
