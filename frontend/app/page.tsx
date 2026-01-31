@@ -206,6 +206,11 @@ export default function Home() {
       setImagePreview(entry.imageUrl);
       setSamples(entry.samples);
       setError(null);
+
+      // Scroll to studio section so results are visible
+      setTimeout(() => {
+        document.getElementById("studio")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     },
     [samples]
   );
