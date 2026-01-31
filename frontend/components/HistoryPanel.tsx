@@ -101,6 +101,8 @@ export function HistoryPanel({
   const handleSelectEntry = () => {
     if (expandedEntry) {
       onSelectEntry(expandedEntry);
+      // Clear expandedEntry WITHOUT revoking URLs — they're now owned by the main page
+      setExpandedEntry(null);
       onClose();
     }
   };
