@@ -582,6 +582,8 @@ export default function Home() {
                     <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-500 rounded-xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
                     <Image
                       src={imagePreview}
+                      width={100}
+                      height={100}
                       alt="Uploaded artwork"
                       className="relative max-h-48 rounded-xl object-contain opacity-90"
                     />
@@ -642,6 +644,8 @@ export default function Home() {
                       src={imagePreview}
                       alt="Source artwork"
                       className="relative h-20 w-20 rounded-xl object-cover"
+                      width={100}
+                      height={100}
                     />
                   </div>
                 )}
