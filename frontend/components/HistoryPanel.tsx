@@ -324,6 +324,8 @@ export function HistoryPanel({
                   onClick={() => handleExpandEntry(entry.id)}
                 >
                   <Image
+                    width={100}
+                    height={100}
                     src={entry.imageThumbnail}
                     alt="Artwork thumbnail"
                     className="w-full aspect-square object-cover"
