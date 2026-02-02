@@ -8,8 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { historyCache } from "@/lib/historyCache";
 import JSZip from "jszip";
-import { Music4, Upload, Download, Sparkles, Loader2, Check, RefreshCw, Headphones, MessageSquare, Volume2 } from "lucide-react";
+import { Music4, Upload, Download, Sparkles, Loader2, Check, RefreshCw } from "lucide-react";
 import { RemixDialog } from "@/components/RemixDialog";
+import { ProcessSection } from "@/components/ProcessSection";
+import { RemixSection } from "@/components/RemixSection";
 import Image from "next/image";
 
 interface AudioSample {
@@ -436,99 +438,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Process Section */}
-      <section id="process" className="py-24 bg-slate-950">
-        <div className="container mx-auto px-6 text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Notre Processus Algorithmique</h2>
-          <p className="text-slate-400">Du visuel au sonore en trois étapes clés.</p>
-        </div>
-
-        <div className="container mx-auto px-6 grid md:grid-cols-3 gap-8">
-          {[
-            {
-              icon: (
-                <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-                </svg>
-              ),
-              title: "Ingestion des Données",
-              desc: "Nous scannons les œuvres (haute résolution) et ingérons les biographies, notes et esquisses de l'artiste."
-            },
-            {
-              icon: (
-                <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
-              ),
-              title: "Synthèse IA",
-              desc: "Nos modèles neuronaux traduisent la densité, le trait et la couleur en timbres, fréquences et rythmiques."
-            },
-            {
-              icon: <Music4 size={32} />,
-              title: "Output Créatif",
-              desc: "Livraison d'une banque de sons (Soundbank) unique, cohérente avec l'ADN de l'artiste source."
-            }
-          ].map((step, idx) => (
-            <div key={idx} className="bg-slate-900/50 backdrop-blur-sm p-8 rounded-2xl border border-slate-800 hover:border-purple-500/50 transition-colors group">
-              <div className="w-16 h-16 bg-slate-800 rounded-xl flex items-center justify-center text-purple-400 mb-6 group-hover:scale-110 transition-transform duration-300">
-                {step.icon}
-              </div>
-              <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-              <p className="text-slate-400 leading-relaxed">
-                {step.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Remix Feature Section */}
-      <section className="py-24 bg-slate-900/50 backdrop-blur-sm relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 w-[400px] h-[400px] bg-purple-600/5 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
-        <div className="container mx-auto px-6 text-center max-w-3xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/30 border border-purple-500/30 text-purple-300 text-sm mb-6">
-            <RefreshCw className="h-3 w-3" />
-            Nouveau
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Affinez Votre Son avec le{" "}
-            <span className="text-purple-400">Remix</span>
-          </h2>
-          <p className="text-slate-400 text-lg mb-12 leading-relaxed">
-            Pas satisfait d&apos;un sample ? Dites-nous ce que vous voulez changer,
-            et notre IA regénère une version améliorée en gardant l&pos;essence de votre oeuvre.
-          </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <Headphones className="h-6 w-6" />,
-                title: "Écoutez",
-                desc: "Identifiez le sample que vous souhaitez améliorer.",
-              },
-              {
-                icon: <MessageSquare className="h-6 w-6" />,
-                title: "Décrivez",
-                desc: "Exprimez ce que vous aimeriez changer : plus de reverb, tempo différent, texture plus granulaire...",
-              },
-              {
-                icon: <Volume2 className="h-6 w-6" />,
-                title: "Recevez",
-                desc: "L'IA génère une nouvelle version. Les anciennes restent accessibles via le versioning.",
-              },
-            ].map((step, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-3">
-                <div className="w-14 h-14 bg-slate-800 rounded-xl flex items-center justify-center text-purple-400 border border-slate-700">
-                  {step.icon}
-                </div>
-                <h3 className="font-bold text-lg">{step.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ProcessSection />
+      <RemixSection />
 
       {/* Studio Section */}
       <main id="studio" className="container mx-auto px-6 py-24 relative z-10">
