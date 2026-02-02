@@ -6,7 +6,7 @@ from typing import List
 
 import ollama
 
-from templates.prompts import AUDIO_DESCRIPTIONS_PROMPT, DESCRIBE_PROMPT
+from templates.prompts import AUDIO_DESCRIPTIONS_PROMPT, DESCRIBE_PROMPT, REMIX_PROMPT
 
 
 class ImageAnalyzer:
@@ -152,6 +152,33 @@ class ImageAnalyzer:
 
         except (json.JSONDecodeError, ValueError) as e:
             raise ValueError(f"Failed to parse audio descriptions: {str(e)}")
+
+    def remix_description(self, original_description: str, user_feedback: str) -> str:
+        """
+        Generate a refined audio description based on user feedback.
+
+        Args:
+            original_description: The original audio description
+            user_feedback: What the user wants changed
+
+        Returns:
+            A new refined audio description
+        """
+        print(f"Generating remix description...")
+
+        prompt = REMIX_PROMPT.format(
+            original_description=original_description,
+            user_feedback=user_feedback,
+        )
+
+        response = self.client.chat(
+            model=self.text_model,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        new_description = response.message.content.strip()
+        print(f"Remix description: {new_description}")
+        return new_description
 
     def image_to_audio_descriptions(
         self, image_base64: str, num_descriptions: int = 10
