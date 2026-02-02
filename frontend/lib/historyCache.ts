@@ -1,10 +1,17 @@
 // IndexedDB-based cache for storing request history with images and audio samples
 // Supports JSON export/import for persistence across sessions
 
+export interface AudioSampleVersion {
+  audioBlob: Blob;
+  description: string;
+  timestamp: number;
+}
+
 export interface AudioSampleData {
   filename: string;
   description: string;
   audioBlob: Blob;
+  versions?: AudioSampleVersion[];
 }
 
 export interface HistoryEntry {
@@ -15,12 +22,20 @@ export interface HistoryEntry {
   samples: AudioSampleData[];
 }
 
+export interface SerializedAudioSampleVersion {
+  audioBase64: string;
+  mimeType: string;
+  description: string;
+  timestamp: number;
+}
+
 // Serializable format for JSON export
 export interface SerializedAudioSample {
   filename: string;
   description: string;
   audioBase64: string;
   mimeType: string;
+  versions?: SerializedAudioSampleVersion[];
 }
 
 export interface SerializedHistoryEntry {
@@ -183,6 +198,53 @@ class HistoryCache {
     });
   }
 
+  async updateEntry(entry: HistoryEntry): Promise<void> {
+    const db = await this.ensureDb();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], "readwrite");
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(entry);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error("Failed to update entry"));
+    });
+  }
+
+  async remixSample(
+    entryId: string,
+    sampleFilename: string,
+    newAudioBlob: Blob,
+    newDescription: string
+  ): Promise<void> {
+    const entry = await this.getEntry(entryId);
+    if (!entry) throw new Error("Entry not found");
+
+    const sample = entry.samples.find((s) => s.filename === sampleFilename);
+    if (!sample) throw new Error("Sample not found");
+
+    // Push current version to history
+    if (!sample.versions) sample.versions = [];
+    sample.versions.push({
+      audioBlob: sample.audioBlob,
+      description: sample.description,
+      timestamp: Date.now(),
+    });
+
+    // Cap at 5 versions to avoid IndexedDB bloat
+    if (sample.versions.length > 5) {
+      sample.versions = sample.versions.slice(-5);
+    }
+
+    // Replace current with remix
+    sample.audioBlob = newAudioBlob;
+    sample.description = newDescription;
+
+    await this.updateEntry(entry);
+    // Fire and forget server sync
+    this.saveToServer().catch(console.error);
+  }
+
   private async base64ToBlob(base64: string): Promise<Blob> {
     // Handle both with and without data URL prefix
     const base64Data = base64.includes(",") ? base64.split(",")[1] : base64;
@@ -238,13 +300,19 @@ class HistoryCache {
     timestamp: number;
     imageUrl: string;
     imageThumbnail: string;
-    samples: { filename: string; description: string; audioUrl: string }[];
+    samples: {
+      filename: string;
+      description: string;
+      audioUrl: string;
+      versionCount: number;
+    }[];
   }> {
     const imageUrl = URL.createObjectURL(entry.imageBlob);
     const samples = entry.samples.map((sample) => ({
       filename: sample.filename,
       description: sample.description,
       audioUrl: URL.createObjectURL(sample.audioBlob),
+      versionCount: sample.versions?.length ?? 0,
     }));
 
     return {
@@ -277,12 +345,27 @@ class HistoryCache {
   ): Promise<SerializedHistoryEntry> {
     const imageBase64 = await this.blobToBase64(entry.imageBlob);
     const samples: SerializedAudioSample[] = await Promise.all(
-      entry.samples.map(async (sample) => ({
-        filename: sample.filename,
-        description: sample.description,
-        audioBase64: await this.blobToBase64(sample.audioBlob),
-        mimeType: sample.audioBlob.type || "audio/wav",
-      }))
+      entry.samples.map(async (sample) => {
+        const serializedVersions: SerializedAudioSampleVersion[] | undefined =
+          sample.versions && sample.versions.length > 0
+            ? await Promise.all(
+                sample.versions.map(async (v) => ({
+                  audioBase64: await this.blobToBase64(v.audioBlob),
+                  mimeType: v.audioBlob.type || "audio/wav",
+                  description: v.description,
+                  timestamp: v.timestamp,
+                }))
+              )
+            : undefined;
+
+        return {
+          filename: sample.filename,
+          description: sample.description,
+          audioBase64: await this.blobToBase64(sample.audioBlob),
+          mimeType: sample.audioBlob.type || "audio/wav",
+          versions: serializedVersions,
+        };
+      })
     );
 
     return {
@@ -305,6 +388,11 @@ class HistoryCache {
       filename: sample.filename,
       description: sample.description,
       audioBlob: this.base64ToBlobSync(sample.audioBase64, sample.mimeType),
+      versions: sample.versions?.map((v) => ({
+        audioBlob: this.base64ToBlobSync(v.audioBase64, v.mimeType),
+        description: v.description,
+        timestamp: v.timestamp,
+      })),
     }));
 
     return {
