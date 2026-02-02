@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const backendUrl = process.env.BACKEND_URL || "http://localhost:8000";
+const backendUrl = process.env.BACKEND_URL || "http://127.0.0.1:8000";
 
 // GET /api/sample/[jobId]/download - Download completed sample pack
 export async function GET(

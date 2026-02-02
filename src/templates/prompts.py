@@ -1,4 +1,14 @@
-BEST_PRACTICES_PROMPT = """"""
+BEST_PRACTICES_PROMPT = """
+
+**STYLE GUIDE (How to write for the audio model):**
+- DO NOT use musical notation (no "Key of C", no "120 BPM").
+- DO describe the sound source, the action, and the environment.
+- Use verbs and physical adjectives (e.g., "bouncing", "scraping", "echoing", "muffled", "sharp").
+- Example of GOOD prompts:
+  * "A basketball bounces rhythmically on a court, shoes squeak against the floor."
+  * "Dripping water echoes sharply, a distant growl reverberates through a cavern."
+  * "Melodic human whistling harmonizing with natural birdsong.
+  """
 
 REMIX_PROMPT = """You are refining an audio sample description for a text-to-audio AI model (TangoFlux).
 
@@ -19,49 +29,43 @@ Generate a single improved audio description that:
 Output ONLY the new description as a single sentence, nothing else."""
 
 DESCRIBE_PROMPT = """
-Analyze this image not just visually, but as a source of sound. Imagine the soundscape implied by this scene.
+Analyze this image and describe the "soundscape" it suggests. Focus on physical materials and atmosphere.
 
-1. **Visual Subject**: What is the main subject?
-2. **Materials & Textures**: List the dominant materials (e.g., metal, water, wood, glass, concrete). How would they sound if touched or struck? (e.g., resonant, damp, hollow, gritty).
-3. **Lighting & Temperature**: Translate the lighting into sonic terms. (e.g., Dark/Shadows -> Bass/Low frequencies; Bright/High contrast -> High frequencies/Sharp transients; Warm -> Analog/Saturated; Cold -> Digital/Clean).
-4. **Activity & Dynamics**: Is the scene static (drones, pads) or dynamic (rhythm, impacts)?
-5. **Vibe**: Give 3 distinct adjectives that describe the AUDIO atmosphere (e.g., "Lo-fi", "Cinematic", "Industrial", "Ethereal").
+1. **Main Subject & Action**: What is happening? Is there implied movement?
+2. **Materials**: List the visible textures (e.g., rusty metal, flowing water, crackling wood, soft fabric, glass).
+3. **Environment**: Describe the acoustic space (e.g., small room, open field, cavernous hall, underwater, busy street).
+4. **Atmosphere**: What is the vibe? (e.g., tense, peaceful, industrial, chaotic).
 
-Output: A concise analysis focusing on these sonic implications.
+Output: A concise paragraph focusing on these physical and atmospheric elements.
 """
 
-AUDIO_DESCRIPTIONS_PROMPT = """Based on this audio-visual analysis:
+AUDIO_DESCRIPTIONS_PROMPT = """Based on this visual description:
+"{vision_analysis}"
 
-        {vision_analysis}
+You are an expert Sound Designer. Generate a Python list of exactly {num_descriptions} sound prompts to generate a sample pack.
 
-        You are an expert Sound Designer. Your goal is to generate exactly {num_descriptions} distinct prompts for a text-to-audio model (TangoFlux).
-        You must convert the visual atmosphere into concrete AUDIO instructions.
+{BEST_PRACTICES_PROMPT}
 
-        **CRITICAL INSTRUCTION FOR WRITING PROMPTS:**
-        - DO NOT use abstract metaphors like "the sound of sadness" or "colors of the wind".
-        - DO USE physical descriptions: instruments, playing techniques, acoustic environments, and textures.
-        - USE adjectives like: "reverberant", "dry", "distorted", "granular", "muffled", "sharp", "rhythmic".
-        - Follow the structure below to pick the best {num_descriptions} sounds that fit the image.
+**STRUCTURE TO GENERATE (Adapt the content to the image mood):**
+ use these best practices 
+- **Drones (x2):** Describe a continuous, evolving background sound. (e.g., "A low, humming mechanical drone vibrating in a large empty tunnel").
+- **Piano/Melodic (x1):** Describe a simple instrument playing emotionally. (e.g., "A lonely, reverberant piano melody playing slowly in a quiet room").
+- **Textures (x5):** Describe specific material noises.
+   - Granular/detailed sounds (e.g., "Sand shifting and crinkling").
+   - Organic nature sounds (e.g., "Wind howling through dry branches").
+   - Spatial ambiance (e.g., "Distant city traffic noise with rain falling").
+- **Rhythmic Loops (x3):** Describe a repeating pattern of sounds. (e.g., "A rhythmic metallic clanking sound repeating like a machine").
+- **One-shots (x4):** Short, single impacts. (e.g., "A heavy wooden door slamming shut with a thud").
 
-        **MANDATORY MUSICAL CONSTRAINT:**
-        - ALL tonal sounds (Pads, Bass, Piano) MUST be in the key of: [Choose a Scale that fits the mood, e.g., C Minor or F Major] completely consistent across all samples.
+**RULES:**
+1. All descriptions must fit the mood of the image analysis provided.
+2. Keep descriptions under 20 words each.
+3. Output MUST be a valid Python list of strings.
 
-        **SOURCE CATEGORIES (Choose from these to create your list):**
-        - **Drones/Pads:** "Cinematic drone, [Instrument], long sustain, [Texture Adjective], slow evolution, consistent with [Key]."
-        - **Melodic:** "A [Instrument] playing a [Adjective] melody, [Emotion], in the key of [Key], [Effect: e.g., delay, reverb]."
-        - **Textures:** "Field recording of [Material from image], [Adjective], looping background noise, immersive."
-        - **Rhythmic:** "A [BPM] bpm beat, [Genre: e.g., Lofi/Techno/Ambient], using [Instrument 1] and [Instrument 2], [Adjective]."
-        - **One-Shots:** "Single hit of [Material], [Adjective], [Acoustic characteristic: e.g., heavy impact, scrape, click]."
-
-        **OUTPUT FORMAT:**
-        Return ONLY a Python list of strings. Each string is a prompt for TangoFlux.
-
-        Example of expected style:
-        [
-            "A deep analog synthesizer drone in C Minor, warm and fluctuating texture, heavy reverb.",
-            "Rhythmic metallic clicking sounds, 120 bpm, industrial texture, resembling machinery.",
-            "Soft piano melody in C Minor, slow tempo, melancholic, accompanied by rain sounds."
-        ]
-
-        Target: {num_descriptions} items.
+**OUTPUT:**
+[
+    "Description 1...",
+    "Description 2...",
+    ...
+]
 """
