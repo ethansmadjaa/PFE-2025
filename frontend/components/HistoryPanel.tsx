@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { historyCache, HistoryEntry } from "@/lib/historyCache";
+import { historyCache } from "@/lib/historyCache";
+import Image from "next/image";
 
 interface DisplayEntry {
   id: string;
@@ -213,8 +214,10 @@ export function HistoryPanel({
               </div>
 
               <div className="flex items-start gap-4">
-                <img
+                <Image
                   src={expandedEntry.imageUrl}
+                  width={128}
+                  height={128}
                   alt="Artwork"
                   className="w-32 h-32 object-cover rounded-lg"
                 />
@@ -265,7 +268,7 @@ export function HistoryPanel({
                   className="group relative border rounded-lg overflow-hidden cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleExpandEntry(entry.id)}
                 >
-                  <img
+                  <Image
                     src={entry.imageThumbnail}
                     alt="Artwork thumbnail"
                     className="w-full aspect-square object-cover"
