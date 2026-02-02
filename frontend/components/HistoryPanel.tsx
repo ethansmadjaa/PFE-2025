@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { historyCache } from "@/lib/historyCache";
+import { RemixDialog } from "@/components/RemixDialog";
+import { RefreshCw } from "lucide-react";
 import Image from "next/image";
 
 interface DisplayEntry {
@@ -11,7 +13,12 @@ interface DisplayEntry {
   timestamp: number;
   imageUrl: string;
   imageThumbnail: string;
-  samples: { filename: string; description: string; audioUrl: string }[];
+  samples: {
+    filename: string;
+    description: string;
+    audioUrl: string;
+    versionCount: number;
+  }[];
 }
 
 interface HistoryPanelProps {
@@ -30,6 +37,11 @@ export function HistoryPanel({
   >([]);
   const [loading, setLoading] = useState(true);
   const [expandedEntry, setExpandedEntry] = useState<DisplayEntry | null>(null);
+  const [remixTarget, setRemixTarget] = useState<{
+    filename: string;
+    description: string;
+    audioUrl: string;
+  } | null>(null);
 
   const loadEntries = useCallback(async () => {
     try {
@@ -115,6 +127,33 @@ export function HistoryPanel({
       setExpandedEntry(null);
     }
   };
+
+  const handleRemixComplete = useCallback(
+    (filename: string, newAudioUrl: string, newDescription: string) => {
+      if (!expandedEntry) return;
+
+      setExpandedEntry((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          samples: prev.samples.map((s) => {
+            if (s.filename === filename) {
+              // Revoke old URL
+              URL.revokeObjectURL(s.audioUrl);
+              return {
+                ...s,
+                audioUrl: newAudioUrl,
+                description: newDescription,
+                versionCount: s.versionCount + 1,
+              };
+            }
+            return s;
+          }),
+        };
+      });
+    },
+    [expandedEntry]
+  );
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString();
@@ -244,18 +283,34 @@ export function HistoryPanel({
                       <span className="text-sm font-medium truncate">
                         {sample.filename}
                       </span>
+                      {sample.versionCount > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">
+                          v{sample.versionCount + 1}
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-2">
                       {sample.description}
                     </p>
-                    <audio
-                      controls
-                      className="w-full h-8"
-                      src={sample.audioUrl}
-                      preload="metadata"
-                    >
-                      Your browser does not support the audio element.
-                    </audio>
+                    <div className="flex items-center gap-2">
+                      <audio
+                        controls
+                        className="w-full h-8"
+                        src={sample.audioUrl}
+                        preload="metadata"
+                      >
+                        Your browser does not support the audio element.
+                      </audio>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 h-8 px-2"
+                        onClick={() => setRemixTarget(sample)}
+                        title="Remix this sample"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -302,6 +357,14 @@ export function HistoryPanel({
           )}
         </CardContent>
       </Card>
+
+      <RemixDialog
+        isOpen={!!remixTarget}
+        onClose={() => setRemixTarget(null)}
+        sample={remixTarget}
+        entryId={expandedEntry?.id ?? null}
+        onRemixComplete={handleRemixComplete}
+      />
     </div>
   );
 }
