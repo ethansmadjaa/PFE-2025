@@ -96,6 +96,48 @@ body {
   animation: float 3s ease-in-out infinite;
 }
 
+/* Scan line — horizontal sweep for grid background */
+@keyframes scan-line {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+.animate-scan-line {
+  animation: scan-line 6s linear infinite;
+}
+
+/* Waveform bars — subtle height oscillation */
+@keyframes waveform {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  50% {
+    transform: scaleY(0.5);
+  }
+}
+
+.animate-waveform {
+  animation: waveform 2s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
