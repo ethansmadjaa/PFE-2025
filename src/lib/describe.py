@@ -6,7 +6,7 @@ from typing import List
 
 import ollama
 
-from templates.prompts import AUDIO_DESCRIPTIONS_PROMPT, DESCRIBE_PROMPT, REMIX_PROMPT
+from src.templates.prompts import AUDIO_DESCRIPTIONS_PROMPT, DESCRIBE_PROMPT, REMIX_PROMPT
 
 
 class ImageAnalyzer:
