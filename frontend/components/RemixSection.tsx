@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useInView } from "motion/react";
 import { RefreshCw, Headphones, MessageSquare, Volume2 } from "lucide-react";
 
@@ -29,11 +29,16 @@ const remixSteps = [
 ];
 
 function WaveformBackground() {
-  // Generate bars for an audio waveform visualization
-  const bars = Array.from({ length: 60 }, (_, i) => {
-    const height = 20 + Math.sin(i * 0.3) * 15 + Math.random() * 25;
-    return { height, delay: i * 0.04 };
-  });
+  const [bars, setBars] = useState<{ height: number; delay: number }[]>([]);
+
+  useEffect(() => {
+    // Generate bars only on client side to avoid hydration mismatch
+    const newBars = Array.from({ length: 60 }, (_, i) => {
+      const height = 20 + Math.sin(i * 0.3) * 15 + Math.random() * 25;
+      return { height, delay: i * 0.04 };
+    });
+    setBars(newBars);
+  }, []);
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">

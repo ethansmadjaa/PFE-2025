@@ -284,9 +284,18 @@ export function HistoryPanel({
                         {sample.filename}
                       </span>
                       {sample.versionCount > 0 && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">
-                          v{sample.versionCount + 1}
-                        </span>
+                        <>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">
+                            v{sample.versionCount + 1}
+                          </span>
+                          <span
+                            className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-medium border border-amber-500/20"
+                            title="This sample has been remixed"
+                          >
+                            <RefreshCw className="w-2.5 h-2.5" />
+                            Remixed
+                          </span>
+                        </>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-2">

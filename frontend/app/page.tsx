@@ -68,14 +68,22 @@ export default function Home() {
     async (jobId: string): Promise<void> => {
       const pollInterval = 2000;
 
+      let errorCount = 0;
+      const maxErrors = 5;
+
       const poll = async (): Promise<void> => {
         try {
           const response = await fetch(`/api/sample/${jobId}`);
-          const status = await response.json();
 
           if (!response.ok) {
-            throw new Error(status.error || "Failed to get job status");
+            console.warn(`Poll request failed (attempt ${errorCount + 1}/${maxErrors}). Status: ${response.status}`);
+            throw new Error(`Failed to get job status: ${response.statusText}`);
           }
+
+          const status = await response.json();
+
+          // Reset error count on successful response
+          errorCount = 0;
 
           setProgress(status.progress);
           setLoadingMessage(status.current_step);
@@ -138,10 +146,19 @@ export default function Home() {
             setTimeout(poll, pollInterval);
           }
         } catch (err) {
-          setError(err instanceof Error ? err.message : "An error occurred");
-          setIsLoading(false);
-          setLoadingMessage("");
-          setProgress(0);
+          // Check if it's likely a network error or temporary server issue
+          console.warn("Polling error:", err);
+          errorCount++;
+
+          if (errorCount <= maxErrors) {
+            console.log(`Retrying poll (${errorCount}/${maxErrors}) in ${pollInterval}ms...`);
+            setTimeout(poll, pollInterval);
+          } else {
+            setError(err instanceof Error ? err.message : "An error occurred");
+            setIsLoading(false);
+            setLoadingMessage("");
+            setProgress(0);
+          }
         }
       };
 

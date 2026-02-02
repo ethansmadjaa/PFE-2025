@@ -6,14 +6,19 @@ from typing import List
 
 import ollama
 
-from src.templates.prompts import AUDIO_DESCRIPTIONS_PROMPT, DESCRIBE_PROMPT, REMIX_PROMPT
+from src.templates.prompts import (
+    AUDIO_DESCRIPTIONS_PROMPT,
+    BEST_PRACTICES_PROMPT,
+    DESCRIBE_PROMPT,
+    REMIX_PROMPT,
+)
 
 
 class ImageAnalyzer:
     """Handles image analysis and audio description generation using Ollama vision models."""
 
     def __init__(
-        self, vision_model: str = "qwen3-vl:235b-cloud", text_model: str = "llama3.2"
+        self, vision_model: str = "llama3.2-vision", text_model: str = "llama3.2"
     ):
         """
         Initialize the image analyzer.
@@ -98,6 +103,7 @@ class ImageAnalyzer:
         prompt = AUDIO_DESCRIPTIONS_PROMPT.format(
             vision_analysis=vision_analysis,
             num_descriptions=num_descriptions,
+            BEST_PRACTICES_PROMPT=BEST_PRACTICES_PROMPT,
         )
 
         response = self.client.chat(
