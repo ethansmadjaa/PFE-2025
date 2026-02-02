@@ -8,7 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { historyCache } from "@/lib/historyCache";
 import JSZip from "jszip";
-import { Music4, Upload, Download, Sparkles, Loader2, Check } from "lucide-react";
+import { Music4, Upload, Download, Sparkles, Loader2, Check, RefreshCw, Headphones, MessageSquare, Volume2 } from "lucide-react";
+import { RemixDialog } from "@/components/RemixDialog";
+import Image from "next/image";
 
 interface AudioSample {
   filename: string;
@@ -26,7 +28,12 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [historyCount, setHistoryCount] = useState(0);
-  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
+  const [remixTarget, setRemixTarget] = useState<{
+    filename: string;
+    description: string;
+    audioUrl: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load history from server on mount
@@ -108,16 +115,16 @@ export default function Home() {
 
             setProgress(100);
             setSamples(audioSamples);
-            setCurrentJobId(jobId);
             setIsLoading(false);
             setLoadingMessage("");
 
             if (currentImageRef.current) {
               try {
-                await historyCache.saveEntryWithSync(
+                const entryId = await historyCache.saveEntryWithSync(
                   currentImageRef.current,
                   audioSamples
                 );
+                setCurrentEntryId(entryId);
                 setHistoryCount((prev) => prev + 1);
               } catch (cacheErr) {
                 console.error("Failed to save to history:", cacheErr);
@@ -238,10 +245,25 @@ export default function Home() {
     [processFile]
   );
 
+  const handleRemixComplete = useCallback(
+    (filename: string, newAudioUrl: string, newDescription: string) => {
+      setSamples((prev) =>
+        prev.map((s) => {
+          if (s.filename === filename) {
+            URL.revokeObjectURL(s.audioUrl);
+            return { ...s, audioUrl: newAudioUrl, description: newDescription };
+          }
+          return s;
+        })
+      );
+    },
+    []
+  );
+
   const handleReset = useCallback(() => {
     setImagePreview(null);
     setSamples([]);
-    setCurrentJobId(null);
+    setCurrentEntryId(null);
     setError(null);
     samples.forEach((sample) => URL.revokeObjectURL(sample.audioUrl));
   }, [samples]);
@@ -295,7 +317,7 @@ export default function Home() {
       <header className="relative z-10 border-b border-slate-800/50 backdrop-blur-md bg-slate-950/80">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center glow-purple">
+            <div className="w-10 h-10 bg-linear-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center glow-purple">
               <Music4 size={24} className="text-white" />
             </div>
             <div>
@@ -332,13 +354,13 @@ export default function Home() {
             Nouvelle frontière de la création sonore
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-            Traduire l'Invisible : <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400">
-              De la Toile à l'Onde
+            Traduire l&apos;Invisible : <br />
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-pink-400 to-orange-400">
+              De la Toile à l&apos;Onde
             </span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Nous transformons l'univers pictural des artistes en <span className="text-white font-medium">matière sonore brute</span>.
+            Nous transformons l&apos;univers pictural des artistes en <span className="text-white font-medium">matière sonore brute</span>.
             Une palette audio générée par IA pour inspirer compositeurs et créateurs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -361,14 +383,14 @@ export default function Home() {
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+              <div className="absolute inset-0 bg-linear-to-r from-blue-500 to-purple-500 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
               <div className="relative bg-slate-950 border border-slate-800 rounded-2xl p-8 aspect-square flex flex-col justify-center items-center text-center overflow-hidden">
                 <div className="flex items-center justify-between w-full mb-8">
                   <svg className="h-12 w-12 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                   </svg>
                   <div className="flex-1 h-1 bg-slate-800 mx-4 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-blue-500 w-1/2 animate-shimmer"></div>
+                    <div className="absolute inset-0 bg-linear-to-r from-pink-500 to-blue-500 w-1/2 animate-shimmer"></div>
                   </div>
                   <Music4 size={48} className="text-blue-500" />
                 </div>
@@ -390,7 +412,7 @@ export default function Home() {
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-6">Pas une musique finie, mais une <span className="text-purple-400">cartouche de couleur</span>.</h2>
               <p className="text-slate-400 text-lg mb-6 leading-relaxed">
-                GenAI-Picto-Music ne remplace pas le compositeur. Nous créons l'instrument. Imaginez extraire l'essence d'un tableau de Soulages pour obtenir une basse profonde et texturée, ou d'un Monet pour des nappes aigües et scintillantes.
+                GenAI-Picto-Music ne remplace pas le compositeur. Nous créons l&apos;instrument. Imaginez extraire l&apos;essence d&apos;un tableau de Soulages pour obtenir une basse profonde et texturée, ou d&apos;un Monet pour des nappes aigües et scintillantes.
               </p>
               <ul className="space-y-4">
                 {[
@@ -400,7 +422,7 @@ export default function Home() {
                   "Intégration facile dans tous les DAW (Ableton, Logic, etc.)."
                 ].map((item, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <div className="mt-1 w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0">
+                    <div className="mt-1 w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
                       <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
@@ -460,11 +482,59 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Remix Feature Section */}
+      <section className="py-24 bg-slate-900/50 backdrop-blur-sm relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 w-[400px] h-[400px] bg-purple-600/5 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+        <div className="container mx-auto px-6 text-center max-w-3xl relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/30 border border-purple-500/30 text-purple-300 text-sm mb-6">
+            <RefreshCw className="h-3 w-3" />
+            Nouveau
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Affinez Votre Son avec le{" "}
+            <span className="text-purple-400">Remix</span>
+          </h2>
+          <p className="text-slate-400 text-lg mb-12 leading-relaxed">
+            Pas satisfait d&apos;un sample ? Dites-nous ce que vous voulez changer,
+            et notre IA regénère une version améliorée en gardant l&pos;essence de votre oeuvre.
+          </p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: <Headphones className="h-6 w-6" />,
+                title: "Écoutez",
+                desc: "Identifiez le sample que vous souhaitez améliorer.",
+              },
+              {
+                icon: <MessageSquare className="h-6 w-6" />,
+                title: "Décrivez",
+                desc: "Exprimez ce que vous aimeriez changer : plus de reverb, tempo différent, texture plus granulaire...",
+              },
+              {
+                icon: <Volume2 className="h-6 w-6" />,
+                title: "Recevez",
+                desc: "L'IA génère une nouvelle version. Les anciennes restent accessibles via le versioning.",
+              },
+            ].map((step, idx) => (
+              <div key={idx} className="flex flex-col items-center gap-3">
+                <div className="w-14 h-14 bg-slate-800 rounded-xl flex items-center justify-center text-purple-400 border border-slate-700">
+                  {step.icon}
+                </div>
+                <h3 className="font-bold text-lg">{step.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  {step.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Studio Section */}
       <main id="studio" className="container mx-auto px-6 py-24 relative z-10">
         <div className="text-center mb-12 max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Essayez le Studio</h2>
-          <p className="text-slate-400">Uploadez votre œuvre et laissez l'IA générer votre palette sonore unique.</p>
+          <p className="text-slate-400">Uploadez votre œuvre et laissez l&pos;IA générer votre palette sonore unique.</p>
         </div>
 
         {/* Upload Area */}
@@ -480,7 +550,7 @@ export default function Home() {
             onClick={() => fileInputRef.current?.click()}
           >
             <CardContent className="flex flex-col items-center justify-center py-20">
-              <div className="mb-6 p-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm">
+              <div className="mb-6 p-6 rounded-2xl bg-linear-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm">
                 <Upload className="h-12 w-12 text-purple-400" />
               </div>
               <p className="text-xl font-semibold mb-2">Drop your artwork here</p>
@@ -509,8 +579,8 @@ export default function Home() {
               <div className="flex flex-col items-center">
                 {imagePreview && (
                   <div className="mb-8 relative group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
-                    <img
+                    <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-500 rounded-xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                    <Image
                       src={imagePreview}
                       alt="Uploaded artwork"
                       className="relative max-h-48 rounded-xl object-contain opacity-90"
@@ -526,7 +596,7 @@ export default function Home() {
                 <Progress value={progress} className="w-full max-w-md mb-4 h-2" />
 
                 <p className="text-center text-sm text-slate-400 mb-8">
-                  This may take a few minutes. We're generating 10 unique audio samples based on your artwork.
+                  This may take a few minutes. We&pos;re generating 10 unique audio samples based on your artwork.
                 </p>
 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 w-full max-w-2xl">
@@ -567,8 +637,8 @@ export default function Home() {
               <div className="flex items-center gap-4">
                 {imagePreview && (
                   <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur-md opacity-30"></div>
-                    <img
+                    <div className="absolute inset-0 bg-linear-to-r from-purple-500 to-pink-500 rounded-xl blur-md opacity-30"></div>
+                    <Image
                       src={imagePreview}
                       alt="Source artwork"
                       className="relative h-20 w-20 rounded-xl object-cover"
@@ -602,7 +672,7 @@ export default function Home() {
                 <Card key={sample.filename} className="overflow-hidden bg-slate-900/50 backdrop-blur-sm border-slate-800 hover:border-slate-700 transition-all group">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-3 text-base">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-sm font-bold text-white">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-purple-500 to-pink-500 text-sm font-bold text-white">
                         {index + 1}
                       </span>
                       <span className="font-mono text-sm text-slate-300">{sample.filename}</span>
@@ -612,14 +682,25 @@ export default function Home() {
                     <p className="mb-4 text-sm text-slate-400 leading-relaxed line-clamp-2">
                       {sample.description}
                     </p>
-                    <audio
-                      controls
-                      className="w-full"
-                      src={sample.audioUrl}
-                      preload="metadata"
-                    >
-                      Your browser does not support the audio element.
-                    </audio>
+                    <div className="flex items-center gap-2">
+                      <audio
+                        controls
+                        className="w-full"
+                        src={sample.audioUrl}
+                        preload="metadata"
+                      >
+                        Your browser does not support the audio element.
+                      </audio>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 h-8 px-2 border-slate-700 hover:border-purple-500 hover:text-purple-400"
+                        onClick={() => setRemixTarget(sample)}
+                        title="Remix this sample"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -632,7 +713,7 @@ export default function Home() {
       <footer className="bg-slate-950 border-t border-slate-900 py-12 relative z-10">
         <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-linear-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
               <Music4 size={20} className="text-white" />
             </div>
             <span className="text-xl font-bold tracking-tight text-slate-500">
@@ -640,7 +721,7 @@ export default function Home() {
             </span>
           </div>
           <div className="text-slate-600 text-sm">
-            © 2024 GenAI-Picto-Music. Tous droits réservés. Innovation par l'IA.
+            © 2024 GenAI-Picto-Music. Tous droits réservés. Innovation par l&pos;IA.
           </div>
           <div className="flex gap-6">
             <a href="#" className="text-slate-500 hover:text-white transition-colors">Instagram</a>
@@ -654,6 +735,14 @@ export default function Home() {
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
         onSelectEntry={handleSelectFromHistory}
+      />
+
+      <RemixDialog
+        isOpen={!!remixTarget}
+        onClose={() => setRemixTarget(null)}
+        sample={remixTarget}
+        entryId={currentEntryId}
+        onRemixComplete={handleRemixComplete}
       />
     </div>
   );
