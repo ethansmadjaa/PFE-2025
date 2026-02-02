@@ -18,8 +18,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from lib.audio import AudioGenerator
-from lib.describe import ImageAnalyzer
+from src.lib.audio import AudioGenerator
+from src.lib.describe import ImageAnalyzer
 import logging
 
 # Configure logging
