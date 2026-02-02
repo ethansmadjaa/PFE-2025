@@ -61,6 +61,25 @@ class Job:
 jobs: dict[str, Job] = {}
 
 
+class RemixJob:
+    def __init__(self, job_id: str, original_description: str, user_feedback: str):
+        self.id = job_id
+        self.original_description = original_description
+        self.user_feedback = user_feedback
+        self.status = JobStatus.PENDING
+        self.progress = 0
+        self.current_step = ""
+        self.created_at = datetime.now()
+        self.completed_at: Optional[datetime] = None
+        self.audio_path: Optional[str] = None
+        self.temp_dir: Optional[str] = None
+        self.error: Optional[str] = None
+        self.new_description: Optional[str] = None
+
+
+remix_jobs: dict[str, RemixJob] = {}
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -99,6 +118,11 @@ class ImageRequest(BaseModel):
     image_base64: str
 
 
+class RemixRequest(BaseModel):
+    original_description: str
+    user_feedback: str
+
+
 class JobResponse(BaseModel):
     job_id: str
     status: str
@@ -113,6 +137,15 @@ class JobStatusResponse(BaseModel):
     samples_generated: int
     total_samples: int
     error: Optional[str] = None
+
+
+class RemixStatusResponse(BaseModel):
+    job_id: str
+    status: str
+    progress: int
+    current_step: str
+    error: Optional[str] = None
+    new_description: Optional[str] = None
 
 
 def process_sample_pack(job_id: str):
@@ -328,6 +361,131 @@ async def download_sample_pack(job_id: str, background_tasks: BackgroundTasks):
         job.zip_path,
         media_type="application/zip",
         filename="sample_pack.zip"
+    )
+
+
+def process_remix(job_id: str):
+    """Background task to process a remix generation."""
+    job = remix_jobs.get(job_id)
+    if not job:
+        return
+
+    try:
+        logging.info(f"[Remix {job_id}] Starting remix generation")
+
+        # Step 1: Generate refined description via Ollama
+        job.status = JobStatus.ANALYZING
+        job.current_step = "Refining audio description with AI..."
+        job.progress = 10
+
+        new_description = image_analyzer.remix_description(
+            job.original_description, job.user_feedback
+        )
+        job.new_description = new_description
+        job.progress = 30
+        logging.info(f"[Remix {job_id}] New description: {new_description}")
+
+        # Step 2: Generate audio with TangoFlux
+        job.status = JobStatus.GENERATING
+        job.current_step = "Generating new audio sample..."
+        job.progress = 40
+
+        audio_tensor = audio_generator.generate_audio(
+            description=new_description,
+            steps=30,
+            duration=10
+        )
+
+        temp_dir = tempfile.mkdtemp()
+        job.temp_dir = temp_dir
+        audio_path = os.path.join(temp_dir, "remix.wav")
+        audio_generator.save_audio(audio_tensor, audio_path)
+        job.audio_path = audio_path
+        job.progress = 95
+        logging.info(f"[Remix {job_id}] Audio saved to {audio_path}")
+
+        # Done
+        job.status = JobStatus.COMPLETED
+        job.progress = 100
+        job.current_step = "Complete!"
+        job.completed_at = datetime.now()
+
+        duration = (job.completed_at - job.created_at).total_seconds()
+        logging.info(f"[Remix {job_id}] Completed in {duration:.1f}s")
+
+    except Exception as e:
+        logging.error(f"[Remix {job_id}] Error: {str(e)}", exc_info=True)
+        job.status = JobStatus.FAILED
+        job.error = str(e)
+        job.current_step = "Failed"
+
+
+@app.post("/remix", status_code=202, response_model=JobResponse)
+async def create_remix_job(request: RemixRequest):
+    """Start a remix job. Returns a job_id for polling."""
+    job_id = str(uuid.uuid4())
+    job = RemixJob(job_id, request.original_description, request.user_feedback)
+    remix_jobs[job_id] = job
+
+    logging.info(f"Created remix job {job_id}")
+
+    thread = threading.Thread(target=process_remix, args=(job_id,))
+    thread.start()
+
+    return JobResponse(
+        job_id=job_id,
+        status="accepted",
+        message="Remix generation started. Use GET /remix/{job_id} to check status."
+    )
+
+
+@app.get("/remix/{job_id}", response_model=RemixStatusResponse)
+async def get_remix_status(job_id: str):
+    """Get the status of a remix job."""
+    job = remix_jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Remix job not found")
+
+    return RemixStatusResponse(
+        job_id=job.id,
+        status=job.status.value,
+        progress=job.progress,
+        current_step=job.current_step,
+        error=job.error,
+        new_description=job.new_description if job.status == JobStatus.COMPLETED else None,
+    )
+
+
+@app.get("/remix/{job_id}/download")
+async def download_remix(job_id: str, background_tasks: BackgroundTasks):
+    """Download the remixed audio WAV file."""
+    job = remix_jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Remix job not found")
+
+    if job.status != JobStatus.COMPLETED:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Remix job is not completed. Current status: {job.status.value}"
+        )
+
+    if not job.audio_path or not os.path.exists(job.audio_path):
+        raise HTTPException(status_code=404, detail="Remix audio file not found")
+
+    def cleanup_remix_files():
+        try:
+            if job.temp_dir and os.path.exists(job.temp_dir):
+                shutil.rmtree(job.temp_dir)
+                logging.info(f"[Remix {job_id}] Cleaned up temporary directory")
+        except Exception as e:
+            logging.error(f"[Remix {job_id}] Failed to cleanup: {str(e)}")
+
+    background_tasks.add_task(cleanup_remix_files)
+
+    return FileResponse(
+        job.audio_path,
+        media_type="audio/wav",
+        filename="remix.wav"
     )
 
 
