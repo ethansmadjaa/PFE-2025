@@ -3,7 +3,6 @@ import os
 import tempfile
 import zipfile
 import uuid
-import asyncio
 import shutil
 from contextlib import asynccontextmanager
 from datetime import datetime
