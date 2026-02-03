@@ -12,6 +12,7 @@ import { Music4, Upload, Download, Sparkles, Loader2, Check, RefreshCw } from "l
 import { RemixDialog } from "@/components/RemixDialog";
 import { ProcessSection } from "@/components/ProcessSection";
 import { RemixSection } from "@/components/RemixSection";
+import { DemoShowcase } from "@/components/DemoShowcase";
 import Image from "next/image";
 
 interface AudioSample {
@@ -402,6 +403,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Demo Showcase Section */}
+      <DemoShowcase />
 
       {/* Concept Section */}
       <section id="concept" className="py-24 bg-slate-900/50 backdrop-blur-sm relative">
