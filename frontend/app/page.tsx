@@ -18,6 +18,7 @@ interface AudioSample {
   filename: string;
   description: string;
   audioUrl: string;
+  isRemixed?: boolean;
 }
 
 export default function Home() {
@@ -89,7 +90,7 @@ export default function Home() {
           setLoadingMessage(status.current_step);
 
           if (status.status === "completed") {
-            setLoadingMessage("Downloading sample pack...");
+            setLoadingMessage("Téléchargement du pack de samples...");
             const downloadResponse = await fetch(
               `/api/sample/${jobId}/download`
             );
@@ -186,7 +187,7 @@ export default function Home() {
         const base64Data = base64Full.split(",")[1];
 
         setIsLoading(true);
-        setLoadingMessage("Starting generation...");
+        setLoadingMessage("Démarrage de la génération...");
         setProgress(0);
 
         try {
@@ -201,10 +202,10 @@ export default function Home() {
           const data = await response.json();
 
           if (!response.ok) {
-            throw new Error(data.error || "Failed to start generation");
+            throw new Error(data.error || "Échec du démarrage de la génération");
           }
 
-          setLoadingMessage("Job started, waiting for progress...");
+          setLoadingMessage("Tâche démarrée, en attente de progression...");
           await pollJobStatus(data.job_id);
         } catch (err) {
           setError(err instanceof Error ? err.message : "An error occurred");
@@ -270,7 +271,12 @@ export default function Home() {
         prev.map((s) => {
           if (s.filename === filename) {
             URL.revokeObjectURL(s.audioUrl);
-            return { ...s, audioUrl: newAudioUrl, description: newDescription };
+            return {
+              ...s,
+              audioUrl: newAudioUrl,
+              description: newDescription,
+              isRemixed: true
+            };
           }
           return s;
         })
@@ -289,7 +295,7 @@ export default function Home() {
 
   const handleDownload = useCallback(async () => {
     if (samples.length === 0) {
-      setError("No samples available for download");
+      setError("Aucun sample disponible pour le téléchargement");
       return;
     }
 
@@ -355,7 +361,7 @@ export default function Home() {
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            History
+            Historique
             {historyCount > 0 && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 text-xs text-white font-bold">
                 {historyCount}
@@ -462,7 +468,7 @@ export default function Home() {
       <main id="studio" className="container mx-auto px-6 py-24 relative z-10">
         <div className="text-center mb-12 max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Essayez le Studio</h2>
-          <p className="text-slate-400">Uploadez votre œuvre et laissez l&pos;IA générer votre palette sonore unique.</p>
+          <p className="text-slate-400">Importez votre œuvre et laissez l&apos;IA générer votre palette sonore unique.</p>
         </div>
 
         {/* Upload Area */}
@@ -481,13 +487,13 @@ export default function Home() {
               <div className="mb-6 p-6 rounded-2xl bg-linear-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm">
                 <Upload className="h-12 w-12 text-purple-400" />
               </div>
-              <p className="text-xl font-semibold mb-2">Drop your artwork here</p>
-              <p className="text-slate-400 mb-6">or click to browse</p>
+              <p className="text-xl font-semibold mb-2">Déposez votre œuvre ici</p>
+              <p className="text-slate-400 mb-6">ou cliquez pour parcourir</p>
               <div className="flex gap-2 text-xs text-slate-500">
                 <span className="px-2 py-1 rounded bg-slate-800">PNG</span>
                 <span className="px-2 py-1 rounded bg-slate-800">JPG</span>
                 <span className="px-2 py-1 rounded bg-slate-800">WEBP</span>
-                <span className="px-2 py-1 rounded bg-slate-800">up to 10MB</span>
+                <span className="px-2 py-1 rounded bg-slate-800">jusqu&apos;à 10MB</span>
               </div>
               <input
                 ref={fileInputRef}
@@ -526,7 +532,7 @@ export default function Home() {
                 <Progress value={progress} className="w-full max-w-md mb-4 h-2" />
 
                 <p className="text-center text-sm text-slate-400 mb-8">
-                  This may take a few minutes. We&pos;re generating 10 unique audio samples based on your artwork.
+                  Cela peut prendre quelques minutes. Nous générons 10 samples audio uniques basés sur votre œuvre.
                 </p>
 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 w-full max-w-2xl">
@@ -554,7 +560,7 @@ export default function Home() {
             <CardContent className="py-8 text-center">
               <p className="text-red-400 mb-4">{error}</p>
               <Button variant="outline" onClick={handleReset} className="border-red-800 hover:border-red-600">
-                Try Again
+                Réessayer
               </Button>
             </CardContent>
           </Card>
@@ -580,10 +586,10 @@ export default function Home() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Sparkles className="h-5 w-5 text-purple-400" />
-                    <h2 className="text-2xl font-bold">Your Sample Pack is Ready</h2>
+                    <h2 className="text-2xl font-bold">Votre Pack de Samples est Prêt</h2>
                   </div>
                   <p className="text-slate-400">
-                    {samples.length} audio samples generated
+                    {samples.length} samples audio générés
                   </p>
                 </div>
               </div>
@@ -591,23 +597,31 @@ export default function Home() {
               <div className="flex gap-3">
                 <Button onClick={handleDownload} className="bg-purple-600 hover:bg-purple-500 glow-purple">
                   <Download className="mr-2 h-4 w-4" />
-                  Download Pack
+                  Télécharger le Pack
                 </Button>
                 <Button variant="outline" onClick={handleReset} className="border-slate-700 hover:border-slate-600">
-                  Create New
+                  Créer un Nouveau
                 </Button>
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               {samples.map((sample, index) => (
-                <Card key={sample.filename} className="overflow-hidden bg-slate-900/50 backdrop-blur-sm border-slate-800 hover:border-slate-700 transition-all group">
+                <Card key={sample.filename} className={`overflow-hidden backdrop-blur-sm border-slate-800 hover:border-slate-700 transition-all group ${sample.isRemixed ? 'bg-purple-900/20 border-purple-500/30' : 'bg-slate-900/50'}`}>
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-3 text-base">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-purple-500 to-pink-500 text-sm font-bold text-white">
-                        {index + 1}
-                      </span>
-                      <span className="font-mono text-sm text-slate-300">{sample.filename}</span>
+                    <CardTitle className="flex items-center justify-between text-base">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-purple-500 to-pink-500 text-sm font-bold text-white">
+                          {index + 1}
+                        </span>
+                        <span className="font-mono text-sm text-slate-300">{sample.filename}</span>
+                      </div>
+                      {sample.isRemixed && (
+                        <span className="px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/50 text-purple-300 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                          <Sparkles size={10} />
+                          Remixé
+                        </span>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -621,14 +635,14 @@ export default function Home() {
                         src={sample.audioUrl}
                         preload="metadata"
                       >
-                        Your browser does not support the audio element.
+                        Votre navigateur ne supporte pas l'audio.
                       </audio>
                       <Button
                         size="sm"
                         variant="outline"
                         className="shrink-0 h-8 px-2 border-slate-700 hover:border-purple-500 hover:text-purple-400"
                         onClick={() => setRemixTarget(sample)}
-                        title="Remix this sample"
+                        title="Remixer ce sample"
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </Button>

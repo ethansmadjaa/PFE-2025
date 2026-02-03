@@ -206,10 +206,14 @@ def process_sample_pack(job_id: str):
             print(f"   🎼 Generating sample {idx}/{len(audio_descriptions)}: {description[:50]}...")
             logging.info(f"[Job {job_id}] Generating sample {idx}/{len(audio_descriptions)}")
 
+            # Heuristic: First 5 are musical (MusicGen), rest are ambience (TangoFlux)
+            model_type = "musicgen" if idx <= 5 else "tangoflux"
+
             audio_tensor = audio_generator.generate_audio(
                 description=description,
                 steps=30,
-                duration=10
+                duration=10,
+                model_type=model_type
             )
             audio_path = os.path.join(temp_audio_dir, f"sample_{idx:02d}.wav")
             audio_generator.save_audio(audio_tensor, audio_path)

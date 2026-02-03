@@ -162,32 +162,56 @@ export function HistoryPanel({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between border-b">
-          <CardTitle className="flex items-center gap-2">
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            History
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop with blur */}
+      <div
+        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
+
+      <Card className="w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col bg-slate-950/90 border-slate-800 shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+
+        <CardHeader className="flex flex-row items-center justify-between border-b border-slate-800/60 p-6 bg-slate-950/50">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+              <svg
+                className="h-5 w-5 text-purple-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <span>Historique de Génération</span>
+            <span className="text-sm font-normal text-slate-500 ml-2 bg-slate-900 px-2 py-0.5 rounded-full border border-slate-800">
+              {entries.length} éléments
+            </span>
           </CardTitle>
           <div className="flex items-center gap-2">
             {entries.length > 0 && (
-              <Button variant="destructive" size="sm" onClick={handleClearAll}>
-                Clear All
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearAll}
+                className="text-red-400 hover:text-red-300 hover:bg-red-950/50"
+              >
+                Tout effacer
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="hover:bg-slate-800 rounded-full w-8 h-8"
+            >
               <svg
                 className="h-5 w-5"
                 fill="none"
@@ -205,37 +229,45 @@ export function HistoryPanel({
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 overflow-auto p-4">
+        <CardContent className="flex-1 overflow-auto p-6 relative">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="h-10 w-10 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+              <p className="text-slate-500 animate-pulse">Chargement de l'historique...</p>
             </div>
           ) : entries.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <svg
-                className="h-12 w-12 mx-auto mb-4 opacity-50"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
-              <p>No history yet</p>
-              <p className="text-sm mt-1">
-                Generate some samples to see them here
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+              <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center mb-6 border border-slate-800">
+                <svg
+                  className="h-10 w-10 opacity-30"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-slate-300 mb-2">Historique vide</h3>
+              <p className="max-w-xs text-center text-sm">
+                Générez votre premier pack de samples pour commencer votre collection.
               </p>
             </div>
           ) : expandedEntry ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Button variant="ghost" size="sm" onClick={handleCloseExpanded}>
+            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+              <div className="flex items-center justify-between bg-slate-950/95 backdrop-blur-md py-4 border-b border-slate-800 -mx-6 px-6 -mt-6 mb-6">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseExpanded}
+                  className="text-slate-400 hover:text-white pl-0 hover:bg-transparent group"
+                >
                   <svg
-                    className="h-4 w-4 mr-2"
+                    className="h-5 w-5 mr-1 transition-transform group-hover:-translate-x-1"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -247,121 +279,171 @@ export function HistoryPanel({
                       d="M15 19l-7-7 7-7"
                     />
                   </svg>
-                  Back
+                  Retour à la bibliothèque
                 </Button>
-                <Button onClick={handleSelectEntry}>Load This Pack</Button>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <Image
-                  src={expandedEntry.imageUrl}
-                  width={128}
-                  height={128}
-                  alt="Artwork"
-                  className="w-32 h-32 object-cover rounded-lg"
-                />
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(expandedEntry.timestamp)}
-                  </p>
-                  <p className="font-medium">
-                    {expandedEntry.samples.length} samples
-                  </p>
+                <div className="flex gap-3">
+                  <Button onClick={handleSelectEntry} className="bg-purple-600 hover:bg-purple-500">
+                    Charger ce Pack
+                  </Button>
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                {expandedEntry.samples.map((sample, index) => (
-                  <div
-                    key={sample.filename}
-                    className="border rounded-lg p-3 space-y-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                        {index + 1}
-                      </span>
-                      <span className="text-sm font-medium truncate">
-                        {sample.filename}
-                      </span>
-                      {sample.versionCount > 0 && (
-                        <>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">
-                            v{sample.versionCount + 1}
-                          </span>
-                          <span
-                            className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-medium border border-amber-500/20"
-                            title="This sample has been remixed"
-                          >
-                            <RefreshCw className="w-2.5 h-2.5" />
-                            Remixed
-                          </span>
-                        </>
-                      )}
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* Visual Info */}
+                <div className="md:w-1/3 shrink-0">
+                  <div className="sticky top-24 space-y-4">
+                    <div className="relative group rounded-xl overflow-hidden border border-slate-700/50 shadow-2xl">
+                      <div className="absolute inset-0 bg-linear-to-r from-purple-500/20 to-blue-500/20 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Image
+                        src={expandedEntry.imageUrl}
+                        width={400}
+                        height={400}
+                        alt="Artwork"
+                        className="w-full aspect-square object-cover"
+                      />
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {sample.description}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <audio
-                        controls
-                        className="w-full h-8"
-                        src={sample.audioUrl}
-                        preload="metadata"
-                      >
-                        Your browser does not support the audio element.
-                      </audio>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0 h-8 px-2"
-                        onClick={() => setRemixTarget(sample)}
-                        title="Remix this sample"
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                      </Button>
+
+                    <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+                      <div className="flex items-center gap-2 text-slate-400 mb-2 text-xs uppercase tracking-wider font-semibold">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Créé le
+                      </div>
+                      <p className="text-white font-medium mb-4">
+                        {new Date(expandedEntry.timestamp).toLocaleString('fr-FR', {
+                          dateStyle: "full",
+                          timeStyle: "short",
+                        })}
+                      </p>
+
+                      <div className="flex items-center gap-2 text-slate-400 mb-2 text-xs uppercase tracking-wider font-semibold">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+                        Contenu
+                      </div>
+                      <p className="text-white font-medium">
+                        {expandedEntry.samples.length} samples
+                      </p>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Samples List */}
+                <div className="md:w-2/3 space-y-4">
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <span className="w-1 h-6 bg-purple-500 rounded-full"></span>
+                    Collection de Samples
+                  </h3>
+                  <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
+                    {expandedEntry.samples.map((sample, index) => (
+                      <div
+                        key={sample.filename}
+                        className="group bg-slate-900/40 hover:bg-slate-800/60 border border-slate-800 hover:border-slate-700 rounded-xl p-4 transition-all flex flex-col justify-between"
+                      >
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-slate-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                              {index + 1}
+                            </span>
+                            <div>
+                              <h4 className="font-medium text-slate-200 text-sm">{sample.filename}</h4>
+                              <div className="flex gap-2 items-center mt-1">
+                                {sample.versionCount > 0 && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono border border-purple-500/20">
+                                    v{sample.versionCount + 1}
+                                  </span>
+                                )}
+                                {sample.versionCount > 0 && (
+                                  <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-medium border border-amber-500/20">
+                                    <RefreshCw className="w-2.5 h-2.5" />
+                                    Remixé
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-slate-400 line-clamp-2 mb-3 pl-9 h-8">
+                          {sample.description}
+                        </p>
+
+                        <div className="flex items-center gap-2 pl-9 mt-auto">
+                          <audio
+                            controls
+                            className="w-full h-8 opacity-80 hover:opacity-100 transition-opacity"
+                            src={sample.audioUrl}
+                            preload="metadata"
+                          >
+                            Votre navigateur ne supporte pas l'audio.
+                          </audio>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="shrink-0 h-8 w-8 p-0 rounded-full hover:bg-purple-500/20 hover:text-purple-400"
+                            onClick={() => setRemixTarget(sample)}
+                            title="Remixer ce sample"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-20">
               {entries.map((entry) => (
                 <div
                   key={entry.id}
-                  className="group relative border rounded-lg overflow-hidden cursor-pointer hover:border-primary transition-colors"
+                  className="group relative bg-slate-900 border border-slate-800 rounded-xl overflow-hidden cursor-pointer hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300"
                   onClick={() => handleExpandEntry(entry.id)}
                 >
-                  <Image
-                    width={100}
-                    height={100}
-                    src={entry.imageThumbnail}
-                    alt="Artwork thumbnail"
-                    className="w-full aspect-square object-cover"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="absolute bottom-0 left-0 right-0 p-2 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                    {formatDate(entry.timestamp)}
+                  <div className="aspect-square relative overflow-hidden">
+                    <Image
+                      width={300}
+                      height={300}
+                      src={entry.imageThumbnail}
+                      alt="Artwork thumbnail"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-purple-900/80 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                      <span className="bg-white text-purple-900 px-4 py-2 rounded-full font-bold text-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                        Voir le Pack
+                      </span>
+                    </div>
                   </div>
-                  <button
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                    onClick={(e) => handleDeleteEntry(entry.id, e)}
-                    title="Delete"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+
+                  <div className="p-3 bg-slate-950 border-t border-slate-800 relative">
+                    <p className="text-xs text-slate-400 font-medium truncate capitalize">
+                      {new Date(entry.timestamp).toLocaleDateString('fr-FR', {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                      })}
+                    </p>
+
+                    <button
+                      className="absolute top-1/2 -translate-y-1/2 right-3 p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      onClick={(e) => handleDeleteEntry(entry.id, e)}
+                      title="Supprimer"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
