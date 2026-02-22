@@ -214,3 +214,4 @@ output.wav
 
 # Frontend data files (can be large with base64 images)
 frontend/data/history.json
+.claude/settings.json
